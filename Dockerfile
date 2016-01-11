@@ -15,11 +15,13 @@ RUN apt-get update && apt-get install -y \
 
 # Install global npm
 RUN npm install -g node-gyp
+RUN npm install -g bower
 
 # Add the current working folder as a mapped folder at /app
 COPY ./ggv_applications/api.snapbook.io /app
 WORKDIR /app
 RUN npm install
+RUN bower install
 
 # Add the ggv opencv module
 COPY ./ggv_modules/ggv-opencv /app/node_modules/ggv-opencv

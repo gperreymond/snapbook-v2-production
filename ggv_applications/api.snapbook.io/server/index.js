@@ -29,7 +29,7 @@ server.connection({
 
 // configure plugin Blipp
 var Blipp = require('blipp');
-server.register(Blipp, function(err){
+server.register(Blipp, function(err) {
 	
 });
 
@@ -54,7 +54,11 @@ var validateToken = function (decodedToken, callback) {
 var Routes = require('./routes');
 server.route(Routes.endpoints);
 
-// start server
-server.start(function () { 
-	console.log('Server running at:', server.info.uri);
+var server_opencv = require('./microservices/opencv');
+server_opencv.run(function() {
+  console.log("opencv's microservices has just started");
+  // start server
+  server.start(function () { 
+	  console.log('Server running at:', server.info.uri);
+  });
 });

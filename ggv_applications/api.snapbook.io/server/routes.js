@@ -16,6 +16,10 @@ exports.endpoints = [
   // snaps
   { method: 'GET', path: '/snaps/{application}/lasted/{limit}', config: SnapsController.read_limit},
   // applications
+  { method: 'POST', path: '/applications/create', config: ApplicationsController.create},
+  { method: 'GET', path: '/applications', config: ApplicationsController.list},
+  { method: 'GET', path: '/applications/{id}', config: ApplicationsController.read},
   { method: 'POST', path: '/applications/{id}/compare', config: ApplicationsController.compare},
+  { method: 'POST', path: '/applications/{id}/batch/patterns', config: ApplicationsController.batch},
   // patterns
 ];
