@@ -1,4 +1,2 @@
-ffi-opencv
-==========
-
-Interface opencv pour nodeJS
+# snapbook
+## opencv / module
