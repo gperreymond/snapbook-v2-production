@@ -4,32 +4,32 @@ using namespace v8;
 
 V8Result MarshalFromNative(int value)
 {
-	NanEscapableScope();
-	return NanEscapeScope(NanNew<Int32>(value));
+	Nan::EscapableHandleScope scope;
+	return scope.Escape(Nan::New<Int32>(value));
 }
 
 V8Result MarshalFromNative(unsigned int value)
 {
-	NanEscapableScope();
-	return NanEscapeScope(NanNew<Uint32>(value));
+	Nan::EscapableHandleScope scope;
+	return scope.Escape(Nan::New<Uint32>(value));
 }
 
 V8Result MarshalFromNative(float value)
 {
-	NanEscapableScope();
-    return NanEscapeScope(NanNew<Number>(value));
+	Nan::EscapableHandleScope scope;
+    return scope.Escape(Nan::New<Number>(value));
 }
 
 V8Result MarshalFromNative(double value)
 {
-	NanEscapableScope();
-	return NanEscapeScope(NanNew<Number>(value));
+	Nan::EscapableHandleScope scope;
+	return scope.Escape(Nan::New<Number>(value));
 }
 
 V8Result MarshalFromNative(const char * value)
 {
-	NanEscapableScope();
-	return NanEscapeScope(NanNew<String>(value));
+	Nan::EscapableHandleScope scope;
+	return scope.Escape(Nan::New<String>(value).ToLocalChecked());
 }
 
 bool MarshalToNative(V8Result inVal, int& outVal)

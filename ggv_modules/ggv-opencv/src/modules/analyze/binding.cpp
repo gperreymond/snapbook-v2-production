@@ -29,7 +29,7 @@ namespace cloudcv
     {
     public:
 
-        ImageAnalyzeTask(ImageSourcePtr image, NanCallback * callback)
+        ImageAnalyzeTask(ImageSourcePtr image, Nan::Callback * callback)
             : Job(callback)
             , m_imageSource(image)
         {
@@ -67,8 +67,8 @@ namespace cloudcv
         virtual Local<Value> CreateCallbackResult()
         {
             TRACE_FUNCTION;
-            NanEscapableScope();
-            return NanEscapeScope(MarshalFromNative(m_analyzeResult));
+            Nan::EscapableHandleScope scope;
+            return scope.Escape(MarshalFromNative(m_analyzeResult));
         }
 
     private:
@@ -79,47 +79,47 @@ namespace cloudcv
     NAN_METHOD(analyzeImage)
     {
         TRACE_FUNCTION;
-        NanEscapableScope();
+        Nan::EscapableHandleScope scope;
 
         Local<Object> imageBuffer;
         std::string   imageFile;
         Local<Function> imageCallback;
         std::string     error;
 
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(2)
             .Argument(0).IsBuffer().Bind(imageBuffer)
             .Argument(1).IsFunction().Bind(imageCallback))
         {
-            NanCallback *callback = new NanCallback(imageCallback);
-            NanAsyncQueueWorker(new ImageAnalyzeTask(CreateImageSource(imageBuffer), callback));
-            NanReturnUndefined();
+            Nan::Callback *callback = new Nan::Callback(imageCallback);
+            Nan::AsyncQueueWorker(new ImageAnalyzeTask(CreateImageSource(imageBuffer), callback));
+            return;
         }
-        else if (NanCheck(args)
+        else if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(2)
             .Argument(0).IsString().Bind(imageFile)
             .Argument(1).IsFunction().Bind(imageCallback))
         {
-            NanCallback *callback = new NanCallback(imageCallback);
-            NanAsyncQueueWorker(new ImageAnalyzeTask(CreateImageSource(imageFile), callback));
-            NanReturnUndefined();
+            Nan::Callback *callback = new Nan::Callback(imageCallback);
+            Nan::AsyncQueueWorker(new ImageAnalyzeTask(CreateImageSource(imageFile), callback));
+            return;
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
 
-        NanReturnUndefined();
+        return;
     }
 
     V8Result MarshalFromNative(const Distribution& d)
     {
         TRACE_FUNCTION;
-        NanEscapableScope();
+        Nan::EscapableHandleScope scope;
 
-        Local<Object> structure = NanNew<Object>();
+        Local<Object> structure = Nan::New<Object>();
         NodeObject resultWrapper(structure);
 
         resultWrapper["average"] = d.average;
@@ -128,15 +128,15 @@ namespace cloudcv
         resultWrapper["min"] = d.min;
         resultWrapper["standardDeviation"] = d.standardDeviation;
 
-        return NanEscapeScope(structure);
+        return scope.Escape(structure);
     }
 
     V8Result MarshalFromNative(const DominantColor& d)
     {
         TRACE_FUNCTION;
-        NanEscapableScope();
+        Nan::EscapableHandleScope scope;
 
-        Local<Object> structure = NanNew<Object>();
+        Local<Object> structure = Nan::New<Object>();
         NodeObject resultWrapper(structure);
 
         resultWrapper["average"] = d.color;
@@ -145,30 +145,30 @@ namespace cloudcv
         resultWrapper["min"] = d.totalPixels;
         resultWrapper["html"] = d.html();
 
-        return NanEscapeScope(structure);
+        return scope.Escape(structure);
     }
 
     V8Result MarshalFromNative(const RGBDistribution& d)
     {
         TRACE_FUNCTION;
-        NanEscapableScope();
+        Nan::EscapableHandleScope scope;
 
-        Local<Object> structure = NanNew<Object>();
+        Local<Object> structure = Nan::New<Object>();
         NodeObject resultWrapper(structure);
 
         resultWrapper["b"] = d.b;
         resultWrapper["g"] = d.g;
         resultWrapper["r"] = d.r;
 
-        return NanEscapeScope(structure);
+        return scope.Escape(structure);
     }
 
     V8Result MarshalFromNative(const AnalyzeResult& res)
     {
         TRACE_FUNCTION;
-        NanEscapableScope();
+        Nan::EscapableHandleScope scope;
 
-        Local<Object> structure = NanNew<Object>();
+        Local<Object> structure = Nan::New<Object>();
         NodeObject resultWrapper(structure);
 
         resultWrapper["aspectRatio"] = res.aspectRatio;
@@ -181,6 +181,6 @@ namespace cloudcv
         resultWrapper["rmsContrast"] = res.rmsContrast;
         resultWrapper["uniqueColors"] = res.uniqieColors;
 
-        return NanEscapeScope(structure);
+        return scope.Escape(structure);
     }
 }

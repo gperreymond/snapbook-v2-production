@@ -8,10 +8,10 @@ namespace cloudcv
     class AsyncTask : public Job
     {
     public:
-        AsyncTask(AsyncLambdaFunction task, NanCallback * callback)
+        AsyncTask(AsyncLambdaFunction task, Nan::Callback * callback)
             : Job(callback)
             , mTask(task)
-            , mReturnResult([](){ NanEscapableScope(); return NanEscapeScope(NanNull()); })
+            , mReturnResult([](){ Nan::EscapableHandleScope scope; return scope.Escape(Nan::Null()); })
         {
         }
 
@@ -25,8 +25,8 @@ namespace cloudcv
         virtual v8::Local<v8::Value> CreateCallbackResult()
         {
             TRACE_FUNCTION;
-            NanEscapableScope();
-            return NanEscapeScope(mReturnResult());
+            Nan::EscapableHandleScope scope;
+            return scope.Escape(mReturnResult());
         }
 
         virtual void ExecuteNativeCode()
@@ -45,9 +45,9 @@ namespace cloudcv
     };
 
 
-    void Async(AsyncLambdaFunction task, NanCallback * callback)
+    void Async(AsyncLambdaFunction task, Nan::Callback * callback)
     {
         TRACE_FUNCTION;
-        NanAsyncQueueWorker(new AsyncTask(task, callback));
+        Nan::AsyncQueueWorker(new AsyncTask(task, callback));
     }   
 }

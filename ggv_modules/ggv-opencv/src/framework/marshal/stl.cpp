@@ -4,8 +4,8 @@ using namespace v8;
 
 V8Result MarshalFromNative(const std::string& value)
 {
-	NanEscapableScope();
-	return NanEscapeScope(NanNew<String>(value.c_str()));
+	Nan::EscapableHandleScope scope;
+	return scope.Escape( Nan::New<String>((char*)value.data(), value.size()).ToLocalChecked() );
 }
 
 bool MarshalToNative(V8Result inVal, std::string& outVal)
@@ -13,8 +13,8 @@ bool MarshalToNative(V8Result inVal, std::string& outVal)
     TRACE_FUNCTION;
     
     if (inVal->IsString()) {
-        NanAsciiString cStr(inVal);
-        outVal = std::string(*cStr, cStr.Size());
+        Nan::Utf8String cStr(inVal);
+        outVal = std::string(*cStr, cStr.length());
         return true;
     }
 

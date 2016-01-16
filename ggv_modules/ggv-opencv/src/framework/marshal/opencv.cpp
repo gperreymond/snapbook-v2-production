@@ -7,46 +7,46 @@ using namespace v8;
 
 V8Result MarshalFromNative(const cv::Size& value)
 {
-	NanEscapableScope();
-	Local<Object> structure = NanNew<Object>();
-	structure->Set(NanNew<String>("width"),    MarshalFromNative(value.width));
-	structure->Set(NanNew<String>("height"),   MarshalFromNative(value.height));
-	return NanEscapeScope(structure);
+	Nan::EscapableHandleScope scope;
+	Local<Object> structure = Nan::New<Object>();
+	structure->Set(Nan::New<String>("width").ToLocalChecked(),    MarshalFromNative(value.width));
+	structure->Set(Nan::New<String>("height").ToLocalChecked(),   MarshalFromNative(value.height));
+	return scope.Escape(structure);
 }
 
 V8Result MarshalFromNative(const cv::Rect& value)
 {
-	NanEscapableScope();
-	Local<Object> structure = NanNew<Object>();
-	structure->Set(NanNew<String>("x"),        MarshalFromNative(value.x));
-	structure->Set(NanNew<String>("y"),        MarshalFromNative(value.y));
-	structure->Set(NanNew<String>("width"),    MarshalFromNative(value.width));
-	structure->Set(NanNew<String>("height"),   MarshalFromNative(value.height));
-	return NanEscapeScope(structure);
+	Nan::EscapableHandleScope scope;
+	Local<Object> structure = Nan::New<Object>();
+	structure->Set(Nan::New<String>("x").ToLocalChecked(),        MarshalFromNative(value.x));
+	structure->Set(Nan::New<String>("y").ToLocalChecked(),        MarshalFromNative(value.y));
+	structure->Set(Nan::New<String>("width").ToLocalChecked(),    MarshalFromNative(value.width));
+	structure->Set(Nan::New<String>("height").ToLocalChecked(),   MarshalFromNative(value.height));
+	return scope.Escape(structure);
 }
 
 V8Result MarshalFromNative(const cv::Point& value)
 {
-	NanEscapableScope();
-	Local<Object> structure = NanNew<Object>();
-	structure->Set(NanNew<String>("x"), MarshalFromNative(value.x));
-	structure->Set(NanNew<String>("y"), MarshalFromNative(value.y));
-	return NanEscapeScope(structure);
+	Nan::EscapableHandleScope scope;
+	Local<Object> structure = Nan::New<Object>();
+	structure->Set(Nan::New<String>("x").ToLocalChecked(), MarshalFromNative(value.x));
+	structure->Set(Nan::New<String>("y").ToLocalChecked(), MarshalFromNative(value.y));
+	return scope.Escape(structure);
 }
 
 V8Result MarshalFromNative(const cv::Point2f& value)
 {
-	NanEscapableScope();
-	Local<Object> structure = NanNew<Object>();
-	structure->Set(NanNew<String>("x"), MarshalFromNative(value.x));
-	structure->Set(NanNew<String>("y"), MarshalFromNative(value.y));
-	return NanEscapeScope(structure);
+	Nan::EscapableHandleScope scope;
+	Local<Object> structure = Nan::New<Object>();
+	structure->Set(Nan::New<String>("x").ToLocalChecked(), MarshalFromNative(value.x));
+	structure->Set(Nan::New<String>("y").ToLocalChecked(), MarshalFromNative(value.y));
+	return scope.Escape(structure);
 }
 
 V8Result MarshalFromNative(const cv::Matx33f& value)
 {
-    NanEscapableScope();
-    Handle<Array> result = NanNew<Array>(9);
+    Nan::EscapableHandleScope scope;
+    Handle<Array> result = Nan::New<Array>(9);
     
     result->Set(0, MarshalFromNative( value(0,0) ));
     result->Set(1, MarshalFromNative( value(0,1) ));
@@ -60,26 +60,26 @@ V8Result MarshalFromNative(const cv::Matx33f& value)
     result->Set(7, MarshalFromNative( value(2,1) ));
     result->Set(8, MarshalFromNative( value(2,2) ));
 
-    return NanEscapeScope(result);
+    return scope.Escape(result);
 }
 
 V8Result MarshalFromNative(const cv::Scalar& value)
 {
-    NanEscapableScope();
-    Local<Array> result = NanNew<Array>(4);
+    Nan::EscapableHandleScope scope;
+    Local<Array> result = Nan::New<Array>(4);
 
 	for (size_t i = 0; i < 4; i++) 
 	{
 		result->Set(i, MarshalFromNative(value.val[i]));
 	}
 
-	return NanEscapeScope(result);
+	return scope.Escape(result);
 }
 
 V8Result MarshalFromNative(const cv::Mat& value)
 {
-    NanEscapableScope();
-    return NanEscapeScope(cloudcv::ImageView::ViewForImage(value));
+    Nan::EscapableHandleScope scope;
+    return scope.Escape(cloudcv::ImageView::ViewForImage(value));
 }
 
 bool MarshalToNativeImage(V8Result imageBuffer, cv::Mat& frame, int flags)
@@ -102,10 +102,10 @@ bool MarshalToNative(V8Result obj, cv::Point2f& value)
 
     const Handle<v8::Object>& object = obj.As<v8::Object>();
 
-    if (object->HasOwnProperty(NanNew<String>("x")) && 
-        object->HasOwnProperty(NanNew<String>("y"))) {
-        value.x = static_cast<float>(object->Get(NanNew<String>("x"))->NumberValue());
-        value.y = static_cast<float>(object->Get(NanNew<String>("y"))->NumberValue());
+    if (object->HasOwnProperty(Nan::New<String>("x").ToLocalChecked()) && 
+        object->HasOwnProperty(Nan::New<String>("y").ToLocalChecked())) {
+        value.x = static_cast<float>(object->Get(Nan::New<String>("x").ToLocalChecked())->NumberValue());
+        value.y = static_cast<float>(object->Get(Nan::New<String>("y").ToLocalChecked())->NumberValue());
         return true;
     }
 
@@ -121,10 +121,10 @@ bool MarshalToNative(V8Result obj, cv::Size& value)
 
     const Handle<v8::Object>& object = obj.As<v8::Object>();
 
-    if (object->HasOwnProperty(NanNew<String>("width")) && 
-        object->HasOwnProperty(NanNew<String>("height"))) {
-        value.width  = static_cast<float>(object->Get(NanNew<String>("width"))->NumberValue());
-        value.height = static_cast<float>(object->Get(NanNew<String>("height"))->NumberValue());
+    if (object->HasOwnProperty(Nan::New<String>("width").ToLocalChecked()) && 
+        object->HasOwnProperty(Nan::New<String>("height").ToLocalChecked())) {
+        value.width  = static_cast<float>(object->Get(Nan::New<String>("width").ToLocalChecked())->NumberValue());
+        value.height = static_cast<float>(object->Get(Nan::New<String>("height").ToLocalChecked())->NumberValue());
         return true;
     }
 

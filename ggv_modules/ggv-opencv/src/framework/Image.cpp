@@ -12,8 +12,8 @@
 using namespace v8;
 
 #define SETUP_FUNCTION(TYP) \
-    NanEscapableScope();      \
-    TYP *self = ObjectWrap::Unwrap<TYP>(args.This());
+    Nan::EscapableHandleScope scope;      \
+    TYP *self = Nan::ObjectWrap::Unwrap<TYP>(info.This());
 
 namespace cloudcv
 {
@@ -26,7 +26,7 @@ namespace cloudcv
     class EncodeImageTask : public Job
     {
     public:
-        EncodeImageTask(cv::Mat image, NanCallback * callback, EncodeOutputFormat fmt, bool returnDataUri = false)
+        EncodeImageTask(cv::Mat image, Nan::Callback * callback, EncodeOutputFormat fmt, bool returnDataUri = false)
             : Job(callback)
             , mImage(image)
             , mFormat(fmt)
@@ -77,11 +77,11 @@ namespace cloudcv
         // safe to use V8 functions again. Don't forget the HandleScope!
         virtual Local<Value> CreateCallbackResult()
         {
-            NanEscapableScope();
+            Nan::EscapableHandleScope scope;
             if (mReturnDataUri)
-                return NanEscapeScope(MarshalFromNative(mDataUriString.str()));
+                return scope.Escape(MarshalFromNative(mDataUriString.str()));
             else
-                return NanEscapeScope(MarshalFromNative(mEncodedData));
+                return scope.Escape(MarshalFromNative(mEncodedData));
         }
 
     private:
@@ -133,7 +133,7 @@ namespace cloudcv
         std::ostringstream      mDataUriString;
     };
 
-    v8::Persistent<v8::FunctionTemplate> ImageView::constructor;
+    Nan::Persistent<v8::FunctionTemplate> ImageView::constructor;
 
     ImageView::ImageView(const cv::Mat& image)
         : mImage(image)
@@ -145,26 +145,26 @@ namespace cloudcv
     {
         SETUP_FUNCTION(ImageView);
         int width = self->mImage.cols;
-        NanReturnValue(NanNew<v8::Integer>(width));
+        info.GetReturnValue().Set(Nan::New<v8::Integer>(width));
     }
 
     NAN_METHOD(ImageView::Height)
     {
         SETUP_FUNCTION(ImageView);
         int height = self->mImage.rows;
-        NanReturnValue(NanNew<v8::Integer>(height));
+        info.GetReturnValue().Set(Nan::New<v8::Integer>(height));
     }
 
     NAN_METHOD(ImageView::Channels)
     {
         SETUP_FUNCTION(ImageView);
-        NanReturnValue(NanNew<v8::Integer>(self->mImage.channels()));
+        info.GetReturnValue().Set(Nan::New<v8::Integer>(self->mImage.channels()));
     }
 
     NAN_METHOD(ImageView::Type)
     {
         SETUP_FUNCTION(ImageView);
-        NanReturnValue(NanNew<v8::Integer>(self->mImage.type()));
+        info.GetReturnValue().Set(Nan::New<v8::Integer>(self->mImage.type()));
     }
 
     NAN_METHOD(ImageView::Stride)
@@ -174,7 +174,7 @@ namespace cloudcv
         // https://github.com/rvagg/nan/issues/270
         // https://github.com/BloodAxe/CloudCV/issues/3
         uint32_t stride = static_cast<uint32_t>(self->mImage.step[0]);
-        NanReturnValue(NanNew<v8::Integer>(stride));
+        info.GetReturnValue().Set(Nan::New<v8::Integer>(stride));
     }
 
     NAN_METHOD(ImageView::AsJpegStream)
@@ -183,18 +183,18 @@ namespace cloudcv
         Local<Function> imageCallback;
         std::string error;
         
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(1)
             .Argument(0).IsFunction().Bind(imageCallback))
         {
-            NanCallback *callback = new NanCallback(imageCallback);
-            NanAsyncQueueWorker(new EncodeImageTask(self->mImage, callback, EncodeOutputFormatJpeg));
-            NanReturnUndefined();
+            Nan::Callback *callback = new Nan::Callback(imageCallback);
+            Nan::AsyncQueueWorker(new EncodeImageTask(self->mImage, callback, EncodeOutputFormatJpeg));
+            return;
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
     }
 
@@ -204,18 +204,18 @@ namespace cloudcv
         Local<Function> imageCallback;
         std::string error;
 
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(1)
             .Argument(0).IsFunction().Bind(imageCallback))
         {
-            NanCallback *callback = new NanCallback(imageCallback);
-            NanAsyncQueueWorker(new EncodeImageTask(self->mImage, callback, EncodeOutputFormatPng));
-            NanReturnUndefined();
+            Nan::Callback *callback = new Nan::Callback(imageCallback);
+            Nan::AsyncQueueWorker(new EncodeImageTask(self->mImage, callback, EncodeOutputFormatPng));
+            return;
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
     }
 
@@ -226,14 +226,14 @@ namespace cloudcv
 
         int w, h;
         std::string error;
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(3)
             .Argument(0).Bind(w)
             .Argument(1).Bind(h)
             .Argument(2).IsFunction().Bind(imageCallback))
         {
-            NanCallback *callback = new NanCallback(imageCallback);
+            Nan::Callback *callback = new Nan::Callback(imageCallback);
 
             auto task = [w,h, self](AsyncReturnHelper& result, AsyncErrorFunction error) {
                 if (self->mImage.empty()) {
@@ -247,11 +247,11 @@ namespace cloudcv
             };
             
             Async(task, callback);
-            NanReturnUndefined();
+            return;
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
     }
 
@@ -261,25 +261,25 @@ namespace cloudcv
         Local<Function> imageCallback;
         std::string error;
 
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(1)
             .Argument(0).IsFunction().Bind(imageCallback))
         {
-            NanCallback *callback = new NanCallback(imageCallback);
-            NanAsyncQueueWorker(new EncodeImageTask(self->mImage, callback, EncodeOutputFormatPng, true));
-            NanReturnValue(NanTrue());
+            Nan::Callback *callback = new Nan::Callback(imageCallback);
+            Nan::AsyncQueueWorker(new EncodeImageTask(self->mImage, callback, EncodeOutputFormatPng, true));
+            info.GetReturnValue().Set(Nan::True());
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
     }
 
     NAN_METHOD(ImageView::AsObject)
     {
         SETUP_FUNCTION(ImageView);
-        Local<Object> res = NanNew<Object>();
+        Local<Object> res = Nan::New<Object>();
         cv::Mat image = self->mImage;
 
         NodeObject resultWrapper(res);
@@ -324,7 +324,7 @@ namespace cloudcv
             break;
         };
 
-        NanReturnValue(res);
+        info.GetReturnValue().Set(res);
     }
 
 
@@ -334,18 +334,18 @@ namespace cloudcv
         Local<Function> imageCallback;
         std::string error;
 
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(1)
             .Argument(0).IsFunction().Bind(imageCallback))
         {
-            NanCallback *callback = new NanCallback(imageCallback);
-            NanAsyncQueueWorker(new EncodeImageTask(self->mImage, callback, EncodeOutputFormatJpeg, true));
-            NanReturnValue(NanTrue());
+            Nan::Callback *callback = new Nan::Callback(imageCallback);
+            Nan::AsyncQueueWorker(new EncodeImageTask(self->mImage, callback, EncodeOutputFormatJpeg, true));
+            info.GetReturnValue().Set(Nan::True());
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
     }
     
@@ -361,14 +361,14 @@ namespace cloudcv
         std::string keypoints;
         std::string descriptors;
         std::string error;
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(3)
             .Argument(0).Bind(keypoints)
             .Argument(1).Bind(descriptors)
             .Argument(2).IsFunction().Bind(imageCallback))
         {
-            NanCallback *callback = new NanCallback(imageCallback);
+            Nan::Callback *callback = new Nan::Callback(imageCallback);
             
             auto task = [self, keypoints, descriptors](AsyncReturnHelper& result, AsyncErrorFunction error) {
                 
@@ -395,11 +395,11 @@ namespace cloudcv
             };
             
             Async(task, callback);
-            NanReturnUndefined();
+            return;
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
     }
     
@@ -412,14 +412,14 @@ namespace cloudcv
         std::string keypoints;
         std::string descriptors;
         std::string error;
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(3)
             .Argument(0).Bind(keypoints)
             .Argument(1).Bind(descriptors)
             .Argument(2).IsFunction().Bind(imageCallback))
         {
-            NanCallback *callback = new NanCallback(imageCallback);
+            Nan::Callback *callback = new Nan::Callback(imageCallback);
             
             auto task = [self, keypoints, descriptors](AsyncReturnHelper& result, AsyncErrorFunction error) {
                 
@@ -525,11 +525,11 @@ namespace cloudcv
             };
             
             Async(task, callback);
-            NanReturnUndefined();
+            return;
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
     }
     
@@ -541,13 +541,13 @@ namespace cloudcv
         int size;
         std::string method;
         std::string error;
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(2)
             .Argument(0).Bind(method)
             .Argument(1).IsFunction().Bind(imageCallback))
         {
-            NanCallback *callback = new NanCallback(imageCallback);
+            Nan::Callback *callback = new Nan::Callback(imageCallback);
 
             auto task = [method, self](AsyncReturnHelper& result, AsyncErrorFunction error) {
                 if (self->mImage.empty()) {
@@ -587,11 +587,11 @@ namespace cloudcv
             };
             
             Async(task, callback);
-            NanReturnUndefined();
+            return;
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
     }
     
@@ -604,7 +604,7 @@ namespace cloudcv
 		std::string buffer = fs1.releaseAndGetString();
 		fs1.release();
 		
-        NanReturnValue(NanNew<v8::String>(buffer.c_str()));
+		info.GetReturnValue().Set( Nan::New<String>((char*)buffer.data(), buffer.size()).ToLocalChecked() );
     }
     
     NAN_METHOD(ImageView::Descriptors)
@@ -616,7 +616,7 @@ namespace cloudcv
 		std::string buffer = fs1.releaseAndGetString();
 		fs1.release();
 		
-        NanReturnValue(NanNew<v8::String>(buffer.c_str()));
+        info.GetReturnValue().Set( Nan::New<String>((char*)buffer.data(), buffer.size()).ToLocalChecked() );
     }
     
     ////////////////////////////////////////
@@ -624,57 +624,57 @@ namespace cloudcv
     void ImageView::Init(v8::Handle<v8::Object> exports)
     {
         //Class
-        v8::Local<v8::FunctionTemplate> tpl = NanNew<FunctionTemplate>(ImageView::New);
+        v8::Local<v8::FunctionTemplate> tpl = Nan::New<FunctionTemplate>(ImageView::New);
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
-        tpl->SetClassName(NanNew("ImageView"));
+        tpl->SetClassName(Nan::New("ImageView").ToLocalChecked());
 
-        NODE_SET_PROTOTYPE_METHOD(tpl, "width", ImageView::Width);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "height", ImageView::Height);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "channels", ImageView::Channels);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "type", ImageView::Type);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "stride", ImageView::Stride);
+        Nan::SetPrototypeMethod(tpl, "width", ImageView::Width);
+        Nan::SetPrototypeMethod(tpl, "height", ImageView::Height);
+        Nan::SetPrototypeMethod(tpl, "channels", ImageView::Channels);
+        Nan::SetPrototypeMethod(tpl, "type", ImageView::Type);
+        Nan::SetPrototypeMethod(tpl, "stride", ImageView::Stride);
 
-        NODE_SET_PROTOTYPE_METHOD(tpl, "asJpegStream", ImageView::AsJpegStream);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "asJpegDataUri", ImageView::AsJpegDataUri);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "asPngStream", ImageView::AsPngStream);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "asPngDataUri", ImageView::AsPngDataUri);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "asObject", ImageView::AsObject);
+        Nan::SetPrototypeMethod(tpl, "asJpegStream", ImageView::AsJpegStream);
+        Nan::SetPrototypeMethod(tpl, "asJpegDataUri", ImageView::AsJpegDataUri);
+        Nan::SetPrototypeMethod(tpl, "asPngStream", ImageView::AsPngStream);
+        Nan::SetPrototypeMethod(tpl, "asPngDataUri", ImageView::AsPngDataUri);
+        Nan::SetPrototypeMethod(tpl, "asObject", ImageView::AsObject);
 
-        NODE_SET_PROTOTYPE_METHOD(tpl, "thumbnail", ImageView::Thumbnail);
+        Nan::SetPrototypeMethod(tpl, "thumbnail", ImageView::Thumbnail);
         
         ////////////////////////////////////////
         // team-ggv
         ////////////////////////////////////////
-        NODE_SET_PROTOTYPE_METHOD(tpl, "compute", ImageView::Compute);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "compare", ImageView::Compare);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "prepare", ImageView::Prepare);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "keypoints", ImageView::Keypoints);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "descriptors", ImageView::Descriptors);
+        Nan::SetPrototypeMethod(tpl, "compute", ImageView::Compute);
+        Nan::SetPrototypeMethod(tpl, "compare", ImageView::Compare);
+        Nan::SetPrototypeMethod(tpl, "prepare", ImageView::Prepare);
+        Nan::SetPrototypeMethod(tpl, "keypoints", ImageView::Keypoints);
+        Nan::SetPrototypeMethod(tpl, "descriptors", ImageView::Descriptors);
         ////////////////////////////////////////
         
-        NanAssignPersistent(constructor, tpl);
-        //constructor = Persistent<Function>::New();
-        exports->Set(NanNew<String>("ImageView"), NanNew<FunctionTemplate>(constructor)->GetFunction());
+        constructor.Reset(tpl);
+        //constructor = Nan::Persistent<Function>::New();
+        exports->Set(Nan::New<String>("ImageView").ToLocalChecked(), Nan::New<FunctionTemplate>(constructor)->GetFunction());
         //std::cout << "ImageView::Init finished" << std::endl;
     }
 
     NAN_METHOD(loadImage)
     {
         TRACE_FUNCTION;
-        NanEscapableScope();
+        Nan::EscapableHandleScope scope;
 
         std::string     imagePath;
         std::string     error;
         Local<Object>   imageBuffer;
         Local<Function> loadCallback;
 
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(2)
             .Argument(0).IsString().Bind(imagePath)
             .Argument(1).IsFunction().Bind(loadCallback))
         {
-            NanCallback *callback = new NanCallback(loadCallback);
+            Nan::Callback *callback = new Nan::Callback(loadCallback);
             auto task = [imagePath](AsyncReturnHelper& result, AsyncErrorFunction error) {
                 cv::Mat image = CreateImageSource(imagePath)->getImage();
                 if (image.empty())
@@ -684,15 +684,15 @@ namespace cloudcv
             };
             
             Async(task, callback);
-            NanReturnUndefined();
+            return;
         }
-        else if (NanCheck(args)
+        else if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(2)
             .Argument(0).IsBuffer().Bind(imageBuffer)
             .Argument(1).IsFunction().Bind(loadCallback))
         {
-            NanCallback *callback = new NanCallback(loadCallback);
+            Nan::Callback *callback = new Nan::Callback(loadCallback);
             auto task = [imagePath](AsyncReturnHelper& result, AsyncErrorFunction error) {
                 cv::Mat image = CreateImageSource(imagePath)->getImage();
                 if (image.empty())
@@ -702,39 +702,39 @@ namespace cloudcv
             };
             
             Async(task, callback);
-            NanReturnUndefined();
+            return;
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());                
+            Nan::ThrowTypeError(error.c_str());                
         }
     }
 
     NAN_METHOD(ImageView::New)
     {
-        NanEscapableScope();
+        Nan::EscapableHandleScope scope;
 
-        if (args.This()->InternalFieldCount() == 0)
-            return NanThrowError("Cannot instantiate without new");
+        if (info.This()->InternalFieldCount() == 0)
+            return Nan::ThrowError("Cannot instantiate without new");
 
         std::string filename;
-        MarshalToNative(args[0], filename);
+        MarshalToNative(info[0], filename);
 
         cv::Mat im = cv::imread(filename.c_str());
         auto imageView = new ImageView(im);
 
-        imageView->Wrap(args.Holder());
-        NanReturnValue(args.Holder());
+        imageView->Wrap(info.Holder());
+        info.GetReturnValue().Set(info.Holder());
     }
 
     v8::Local<v8::Value> ImageView::ViewForImage(cv::Mat image)
     {        
-        NanEscapableScope();
+        Nan::EscapableHandleScope scope;
         // Insiped by SO: http://stackoverflow.com/questions/16600735/what-is-an-internal-field-count-and-what-is-setinternalfieldcount-used-for
-        Local<Object> holder = NanNew<FunctionTemplate>(constructor)->GetFunction()->NewInstance();
+        Local<Object> holder = Nan::New<FunctionTemplate>(constructor)->GetFunction()->NewInstance();
 
         ImageView * imageView = new ImageView(image);
         imageView->Wrap(holder);
-        return NanEscapeScope(holder);
+        return scope.Escape(holder);
     }
 }

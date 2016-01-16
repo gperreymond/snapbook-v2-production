@@ -17,16 +17,16 @@ template<typename _Tp, int cn>
 V8Result MarshalFromNative(const cv::Vec<_Tp, cn>& value)
 {
 	using namespace v8;
-    NanEscapableScope();
+    Nan::EscapableHandleScope scope;
 
-	Local<Array> result = NanNew<Array>(cn);
+	Local<Array> result = Nan::New<Array>(cn);
 
 	for (size_t i = 0; i < cn; i++)
 	{
 		result->Set(i, MarshalFromNative(value.val[i]));
 	}
 
-	return NanEscapeScope(result);
+	return scope.Escape(result);
 }
 
 bool MarshalToNativeImage(V8Result buffer, cv::Mat& frame, int flags);

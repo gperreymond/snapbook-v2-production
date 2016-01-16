@@ -35,7 +35,7 @@ private:
     std::string mMessage;
 };
 
-typedef std::function<bool(_NAN_METHOD_ARGS_TYPE) > InitFunction;
+typedef std::function<bool(Nan::NAN_METHOD_ARGS_TYPE) > InitFunction;
 
 class NanMethodArgBinding;
 class NanCheckArguments;
@@ -48,7 +48,7 @@ class NanArgStringEnum;
 class NanCheckArguments
 {
 public:
-    NanCheckArguments(_NAN_METHOD_ARGS_TYPE args);
+    NanCheckArguments(Nan::NAN_METHOD_ARGS_TYPE info);
 
     NanCheckArguments& ArgumentsCount(int count);
     NanCheckArguments& ArgumentsCount(int argsCount1, int argsCount2);
@@ -64,7 +64,7 @@ public:
     NanCheckArguments& Error(std::string * error);
 
 private:
-    _NAN_METHOD_ARGS_TYPE m_args;
+    Nan::NAN_METHOD_ARGS_TYPE m_info;
     InitFunction          m_init;
     std::string         * m_error;
 };
@@ -130,7 +130,7 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 
-NanCheckArguments NanCheck(_NAN_METHOD_ARGS_TYPE args);
+NanCheckArguments NanCheck(Nan::NAN_METHOD_ARGS_TYPE info);
 
 //////////////////////////////////////////////////////////////////////////
 // Template functions implementation
@@ -138,8 +138,8 @@ NanCheckArguments NanCheck(_NAN_METHOD_ARGS_TYPE args);
 template <typename T>
 NanCheckArguments& NanMethodArgBinding::Bind(v8::Local<T>& value)
 {
-    return mParent.AddAndClause([this, &value](_NAN_METHOD_ARGS_TYPE args) {
-        value = args[mArgIndex].As<T>();
+    return mParent.AddAndClause([this, &value](Nan::NAN_METHOD_ARGS_TYPE info) {
+        value = info[mArgIndex].As<T>();
         return true;
     });
 }
@@ -148,16 +148,16 @@ NanCheckArguments& NanMethodArgBinding::Bind(v8::Local<T>& value)
 template <typename T>
 NanCheckArguments& NanMethodArgBinding::Bind(T& value)
 {
-    return mParent.AddAndClause([this, &value](_NAN_METHOD_ARGS_TYPE args) {
-        return MarshalToNative(args[mArgIndex], value);
+    return mParent.AddAndClause([this, &value](Nan::NAN_METHOD_ARGS_TYPE info) {
+        return MarshalToNative(info[mArgIndex], value);
     });
 }
 
 template <typename T1, typename T2>
 NanCheckArguments& NanMethodArgBinding::BindAny(T1& value1, T2& value2)
 {
-    return mParent.AddAndClause([this, &value1, &value2](_NAN_METHOD_ARGS_TYPE args) {
-        return MarshalToNative(args[mArgIndex], value1) || MarshalToNative(args[mArgIndex], value2);
+    return mParent.AddAndClause([this, &value1, &value2](Nan::NAN_METHOD_ARGS_TYPE info) {
+        return MarshalToNative(info[mArgIndex], value1) || MarshalToNative(info[mArgIndex], value2);
     });  
 }
 
@@ -182,9 +182,9 @@ NanArgStringEnum<T>::NanArgStringEnum(
 template <typename T>
 NanCheckArguments& NanArgStringEnum<T>::Bind(T& value)
 {
-    return mOwner.mParent.AddAndClause([this, &value](_NAN_METHOD_ARGS_TYPE args) {
+    return mOwner.mParent.AddAndClause([this, &value](Nan::NAN_METHOD_ARGS_TYPE info) {
         std::string key;
-        return MarshalToNative(args[mArgIndex], key) && TryMatchStringEnum(key.c_str(), value);
+        return MarshalToNative(info[mArgIndex], key) && TryMatchStringEnum(key.c_str(), value);
     });
 }
 

@@ -40,7 +40,7 @@ private:
 template <typename Val>
 NodeObjectProperty& NodeObjectProperty::operator=(const Val& val)
 {
-    NanEscapableScope();
+    Nan::EscapableHandleScope scope;
     TRACE_FUNCTION;
     //LOG_TRACE_MESSAGE(mPropertyName << " = " << val);
 

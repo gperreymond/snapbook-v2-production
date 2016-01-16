@@ -5,14 +5,14 @@ namespace cloudcv
 {
     NAN_METHOD(version)
     {
-        NanScope();
+        Nan::HandleScope scope;
         std::string versionString = lexical_cast(CV_MAJOR_VERSION) + "." + lexical_cast(CV_MINOR_VERSION);
-        NanReturnValue(MarshalFromNative(versionString));
+        info.GetReturnValue().Set(MarshalFromNative(versionString));
     }
 
 	NAN_METHOD(buildInformation)
     {
-		NanEscapableScope();
-		NanReturnValue(MarshalFromNative(cv::getBuildInformation()));
+		Nan::EscapableHandleScope scope;
+		info.GetReturnValue().Set(MarshalFromNative(cv::getBuildInformation()));
     }
 }

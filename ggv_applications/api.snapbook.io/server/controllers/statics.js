@@ -5,8 +5,8 @@ var path = require('path');
 exports.dashboard = {
   handler: {
     directory: {
-      path: 'dashboard',
-      listing: false
+      path: require('path').resolve(__dirname, '../dashboard'),
+      listing: true
     }
   }
 };

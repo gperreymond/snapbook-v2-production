@@ -10,12 +10,12 @@ using namespace cloudcv;
 
 void RegisterModule(Handle<Object> target)
 {
-    NODE_SET_METHOD(target, "version",                  version);
-    NODE_SET_METHOD(target, "buildInformation",         buildInformation);
-    NODE_SET_METHOD(target, "analyzeImage",             analyzeImage);
-    NODE_SET_METHOD(target, "calibrationPatternDetect", calibrationPatternDetect);
-    NODE_SET_METHOD(target, "calibrateCamera",          calibrateCamera);
-    NODE_SET_METHOD(target, "loadImage",                loadImage);
+    Nan::SetMethod(target, "version",                  version);
+    Nan::SetMethod(target, "buildInformation",         buildInformation);
+    Nan::SetMethod(target, "analyzeImage",             analyzeImage);
+    Nan::SetMethod(target, "calibrationPatternDetect", calibrationPatternDetect);
+    Nan::SetMethod(target, "calibrateCamera",          calibrateCamera);
+    Nan::SetMethod(target, "loadImage",                loadImage);
 
     ImageView::Init(target);
 }

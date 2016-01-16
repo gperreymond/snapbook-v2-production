@@ -1,0 +1,4 @@
+https://nodesource.com/blog/c-add-ons-for-nodejs-v4/
+https://github.com/Level/leveldown/blob/master/binding.gyp
+
+https://github.com/justmoon/node-bignum

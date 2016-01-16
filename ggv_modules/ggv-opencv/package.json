@@ -2,17 +2,18 @@
   "name": "ggv-opencv",
   "version": "3.0.0",
   "description": "Mise à disposition d'OpenCV via javascript",
-  "scripts": {
-  },
+  "scripts": {},
   "author": {
     "name": "Gilles Perreymond",
     "email": "gperreymond@gmail.com"
   },
-  "dependencies": {
-    "nan": "1.8.4",
-    "native-opencv": "3.0.0"
-  },
   "devDependencies": {
+    "fs-extra": "0.26.4",
+    "node-dir": "0.1.11"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "nan": "2.2.0",
+    "native-opencv": "3.0.0"
+  }
 }

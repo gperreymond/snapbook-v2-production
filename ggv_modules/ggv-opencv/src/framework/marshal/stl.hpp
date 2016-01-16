@@ -15,10 +15,10 @@ template <typename T>
 V8Result MarshalFromNative(const std::vector<T>& values)
 {
 	using namespace v8;
-	NanEscapableScope();
+	Nan::EscapableHandleScope scope;
 
     uint32_t length = static_cast<uint32_t>(values.size());
-    Local<Array> result = NanNew<Array>(length);
+    Local<Array> result = Nan::New<Array>(length);
 
     for (uint32_t i = 0; i < length; i++)
 	{
@@ -26,7 +26,7 @@ V8Result MarshalFromNative(const std::vector<T>& values)
 		result->Set(i, MarshalFromNative(item));
 	}
 
-	return NanEscapeScope(result);
+	return scope.Escape(result);
 }
 
 template<typename _Val_type>
@@ -34,8 +34,8 @@ V8Result MarshalFromNative(const std::map<std::string, _Val_type>& values)
 {
 	using namespace v8;
 
-	NanEscapableScope();
-	Local<Object> structure = NanNew<Object>();
+	Nan::EscapableHandleScope scope;
+	Local<Object> structure = Nan::New<Object>();
 
 	typedef typename std::map<std::string, _Val_type>::const_iterator const_iterator;
 	for (const_iterator it = values.begin(); it != values.end(); ++it)
@@ -43,17 +43,17 @@ V8Result MarshalFromNative(const std::map<std::string, _Val_type>& values)
 		structure->Set(MarshalFromNative(it->first), MarshalFromNative(it->second));
 	}
 
-	return NanEscapeScope(structure);
+	return scope.Escape(structure);
 }
 
 template<typename _Tp, size_t _Size>
 V8Result MarshalFromNative(const std::array<_Tp, _Size>& values)
 {
     using namespace v8;
-    NanEscapableScope();
+    Nan::EscapableHandleScope scope;
 
     uint32_t length = static_cast<uint32_t>(values.size());
-    Local<Array> result = NanNew<Array>(length);
+    Local<Array> result = Nan::New<Array>(length);
 
     for (uint32_t i = 0; i < length; i++)
     {
@@ -61,7 +61,7 @@ V8Result MarshalFromNative(const std::array<_Tp, _Size>& values)
         result->Set(i, MarshalFromNative(item));
     }
 
-    return NanEscapeScope(result);
+    return scope.Escape(result);
 }
 
 //////////////////////////////////////////////////////////////////////////

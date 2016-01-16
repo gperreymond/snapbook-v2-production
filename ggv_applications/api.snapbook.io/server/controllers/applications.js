@@ -1,6 +1,7 @@
 "use strict";
 
 var Boom = require('boom');
+var Joi = require('joi');
 var async = require('async');
 var _ = require('lodash');
 var uuid = require('uuid');
@@ -15,11 +16,9 @@ var Pattern = require('../models/pattern');
 var Activity = require('../models/activity');
 var Ressource = require('../models/ressource');
 
-var seneca = require('seneca')({ timeout:99999 });
-
 exports.create = {
   auth: {
-    strategy: 'token',
+    strategy: 'jwt',
     scope: ['superu']
   },
   handler: function(request, reply) {
@@ -85,8 +84,16 @@ exports.create = {
 
 exports.read = {
   auth: {
-    strategy: 'token',
-    scope: ['application','user','superu']
+    strategy: 'jwt',
+    scope: ['application', 'user', 'superu']
+  },
+  tags: ['api', 'applications'],
+  description: 'Retourne les détails d\'une application',
+  notes: 'Retourne les détails d\'une application',
+  validate: {
+    params: {
+      id: Joi.string().required()
+    }
   },
   handler: function(request, reply) {
     Application
@@ -102,7 +109,7 @@ exports.read = {
 
 exports.list = {
   auth: {
-    strategy: 'token',
+    strategy: 'jwt',
     scope: ['superu']
   },
   handler: function(request, reply) {
@@ -119,8 +126,20 @@ exports.list = {
 
 exports.compare = {
   auth: {
-    strategy: 'token',
-    scope: ['application','superu']
+    strategy: 'jwt',
+    scope: ['application', 'superu']
+  },
+  tags: ['api', 'applications'],
+  description: 'Retourne le résultat d\'un compare pour une application',
+  notes: 'Retourne le résultat d\'un compare pour une application',
+  validate: {
+    payload: {
+      file: Joi.object().meta({ swaggerType: 'file' }).required(),
+      mode: Joi.string()
+    },
+    params: {
+      id: Joi.string().required()
+    }
   },
   payload: {
   	maxBytes: 5242880,
@@ -186,13 +205,7 @@ exports.compare = {
         // 2. compute snap
         function(results, callback) {
           var t1 = new Date();
-          seneca
-          .client({
-            type: 'tcp',
-            host: 'localhost',
-            port: '10120'
-          })
-          .act({role: 'opencv', cmd: 'compute', filepath: results.snap_filepath}, function (err, result_compute) {
+          request.server.seneca.act({role: 'opencv', cmd: 'compute', filepath: results.snap_filepath}, function (err, result_compute) {
             if (err) return callback(err, null);
             results.snap_compute = result_compute;
             var t2 = new Date();
@@ -206,13 +219,7 @@ exports.compare = {
           results.patterns_compare = [];
           // prepare queues
           var q = async.queue(function (task, next) {
-            seneca
-            .client({
-              type: 'tcp',
-              host: 'localhost',
-              port: '10120'
-            })
-            .act({role: 'opencv', cmd: 'compare', snap: results.snap_filepath, pattern: task.item}, function (err, result_compare) {
+            request.server.seneca.act({role: 'opencv', cmd: 'compare', snap: results.snap_filepath, pattern: task.item}, function (err, result_compare) {
               if (err) return next(null, false);
               results.patterns_compare.push(result_compare);
               next(null, true);
@@ -229,13 +236,7 @@ exports.compare = {
             });
           });
           /* async.mapLimit(results.patterns, 5, function iterator(item, next) {
-            seneca
-            .client({
-              type: 'tcp',
-              host: 'localhost',
-              port: '10120'
-            })
-            .act({role: 'opencv', cmd: 'compare', snap: results.snap_filepath, pattern: item}, function (err, result_compare) {
+            request.server.seneca.act({role: 'opencv', cmd: 'compare', snap: results.snap_filepath, pattern: item}, function (err, result_compare) {
               if (err) return next(null, false);
               results.patterns_compare.push(result_compare);
               next(null, true);
@@ -335,7 +336,7 @@ exports.compare = {
 
 exports.batch = {
   auth: {
-    strategy: 'token',
+    strategy: 'jwt',
     scope: ['superu']
   },
   handler: function(request, reply) {
@@ -359,7 +360,8 @@ exports.batch = {
         function(item, cb) {
           var params = {
             id: request.params.id,
-            filepath: item
+            filepath: item,
+            seneca: request.server.seneca
           };
           batch_one(params, function(error, response) {
             if (error) return cb(null, {item: item, compute: false});
@@ -414,13 +416,7 @@ var batch_one = function(params, reply) {
   		
   		// get files stats
       function(results, callback) {
-        seneca
-        .client({
-          type: 'tcp',
-          host: 'localhost',
-          port: '10120'
-        })
-        .act({role: 'opencv', cmd: 'analyse', filepath: file}, function (err, result_analyse) {
+        params.seneca.act({role: 'opencv', cmd: 'analyse', filepath: file}, function (err, result_analyse) {
           if (err) return callback(err, null);
           results.pattern = result_analyse;
           callback(null, results);
@@ -492,13 +488,7 @@ var batch_one = function(params, reply) {
           if (err) {
             callback(err,null);
           } else {
-            seneca
-            .client({
-              type: 'tcp',
-              host: 'localhost',
-              port: '10120'
-            })
-            .act({role: 'opencv', cmd: 'compute', filepath: destination_filepath}, function (err, result_compute) {
+            params.seneca.act({role: 'opencv', cmd: 'compute', filepath: destination_filepath}, function (err, result_compute) {
               if (err) return callback(err, null);
               results.pattern = result_compute;
               callback(null, results);

@@ -8,8 +8,11 @@
 - SNAPBOOK_MONGO_PASSWORD
 - SNAPBOOK_JWT_KEY_SESSION
 - SNAPBOOK_DIR_APPLICATIONS
+- SNAPBOOK_LOGS_FILE
+- ENABLE_PRODUCTION
 - ENABLE_NEWRELIC
 - ENABLE_CLOUD9
 
+### "ENABLE_PRODUCTION = 1" pour activer le mode production.
 ### "ENABLE_NEWRELIC = 1" pour activer le monitoring.
 ### "ENABLE_CLOUD9 = 1" pour activer la configuration c9.

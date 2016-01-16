@@ -17,7 +17,7 @@ namespace cloudcv
     class DetectPatternTask : public Job
     {
     public:
-        DetectPatternTask(ImageSourcePtr imageSource, cv::Size patternSize, PatternType type, NanCallback * callback)
+        DetectPatternTask(ImageSourcePtr imageSource, cv::Size patternSize, PatternType type, Nan::Callback * callback)
             : Job(callback)
             , m_imageSource(imageSource)
             , m_algorithm(patternSize, type)
@@ -56,8 +56,8 @@ namespace cloudcv
         virtual Local<Value> CreateCallbackResult()
         {
             TRACE_FUNCTION;
-            NanEscapableScope();
-            Local<Object> res = NanNew<Object>(); //(Object::New());
+            Nan::EscapableHandleScope scope;
+            Local<Object> res = Nan::New<Object>(); //(Object::New());
 
             NodeObject resultWrapper(res);
             resultWrapper["patternFound"] = m_patternfound;
@@ -67,7 +67,7 @@ namespace cloudcv
                 resultWrapper["corners"] = m_corners2d;
             }
 
-            return NanEscapeScope(res);
+            return scope.Escape(res);
         }
 
     private:
@@ -90,7 +90,7 @@ namespace cloudcv
             const std::vector<std::string>& files,
             cv::Size boardSize, 
             PatternType type, 
-            NanCallback * callback
+            Nan::Callback * callback
         )
             : Job(callback)
             , m_algorithm(boardSize, type)
@@ -104,7 +104,7 @@ namespace cloudcv
             cv::Size imageSize,
             cv::Size boardSize, 
             PatternType type, 
-            NanCallback * callback
+            Nan::Callback * callback
         )
             : Job(callback)
             , m_algorithm(boardSize, type)
@@ -160,8 +160,8 @@ namespace cloudcv
         virtual Local<Value> CreateCallbackResult()
         {
             TRACE_FUNCTION;
-            NanEscapableScope();
-            Local<Object> res = NanNew<Object>(); //Local(Object::New());
+            Nan::EscapableHandleScope scope;
+            Local<Object> res = Nan::New<Object>(); //Local(Object::New());
 
             NodeObject resultWrapper(res);
 
@@ -173,7 +173,7 @@ namespace cloudcv
 
             resultWrapper["calibrationSuccess"] = m_calibrationSuccess;
 
-            return NanEscapeScope(res);
+            return scope.Escape(res);
         }
 
     private:
@@ -189,7 +189,7 @@ namespace cloudcv
     NAN_METHOD(calibrationPatternDetect)
     {
         TRACE_FUNCTION;
-        NanEscapableScope();
+        Nan::EscapableHandleScope scope;
 
         Local<Object>	imageBuffer;
         std::string     imagePath;
@@ -199,7 +199,7 @@ namespace cloudcv
         std::string     error;
         LOG_TRACE_MESSAGE("Begin parsing arguments");
 
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(4)
             .Argument(0).IsBuffer().Bind(imageBuffer)
@@ -211,14 +211,14 @@ namespace cloudcv
             .Argument(3).IsFunction().Bind(callback))
         {
             LOG_TRACE_MESSAGE("Parsed function arguments");
-            NanCallback *nanCallback = new NanCallback(callback);
-            NanAsyncQueueWorker(new DetectPatternTask(
+            Nan::Callback *nanCallback = new Nan::Callback(callback);
+            Nan::AsyncQueueWorker(new DetectPatternTask(
                 CreateImageSource(imageBuffer), 
                 patternSize, 
                 pattern, 
                 nanCallback));
         }
-        else if (NanCheck(args)
+        else if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(4)
             .Argument(0).IsString().Bind(imagePath)
@@ -230,8 +230,8 @@ namespace cloudcv
             .Argument(3).IsFunction().Bind(callback))
         {
             LOG_TRACE_MESSAGE("Parsed function arguments");
-            NanCallback *nanCallback = new NanCallback(callback);
-            NanAsyncQueueWorker(new DetectPatternTask(
+            Nan::Callback *nanCallback = new Nan::Callback(callback);
+            Nan::AsyncQueueWorker(new DetectPatternTask(
                 CreateImageSource(imagePath), 
                 patternSize, 
                 pattern, 
@@ -240,16 +240,16 @@ namespace cloudcv
         else if (!error.empty())
         {
             LOG_TRACE_MESSAGE(error);
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
 
-        NanReturnUndefined();
+        return;
     }
 
     NAN_METHOD(calibrateCamera)
     {
         TRACE_FUNCTION;
-        NanEscapableScope();
+        Nan::EscapableHandleScope scope;
 
         std::vector<std::string>                imageFiles;
         std::vector< std::vector<cv::Point2f> > imageCorners;
@@ -259,7 +259,7 @@ namespace cloudcv
         PatternType     pattern;
         std::string     error;
 
-        if (NanCheck(args)
+        if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(4)
             .Argument(0).IsArray().Bind(imageFiles)
@@ -272,9 +272,9 @@ namespace cloudcv
         {
             LOG_TRACE_MESSAGE("Image files count: " << imageFiles.size());
 
-            NanCallback *nanCallback = new NanCallback(callback);
-            NanAsyncQueueWorker(new ComputeIntrinsicParametersTask(imageFiles, patternSize, pattern, nanCallback));
-        } else if (NanCheck(args)
+            Nan::Callback *nanCallback = new Nan::Callback(callback);
+            Nan::AsyncQueueWorker(new ComputeIntrinsicParametersTask(imageFiles, patternSize, pattern, nanCallback));
+        } else if (NanCheck(info)
             .Error(&error)
             .ArgumentsCount(6)
             .Argument(0).IsArray().Bind(imageCorners)
@@ -286,14 +286,14 @@ namespace cloudcv
                 { "ACIRCLES_GRID",  PatternType::ACIRCLES_GRID } }).Bind(pattern)
             .Argument(4).IsFunction().Bind(callback))
         {
-            NanCallback *nanCallback = new NanCallback(callback);
-            NanAsyncQueueWorker(new ComputeIntrinsicParametersTask(imageCorners, imageSize, patternSize, pattern, nanCallback));
+            Nan::Callback *nanCallback = new Nan::Callback(callback);
+            Nan::AsyncQueueWorker(new ComputeIntrinsicParametersTask(imageCorners, imageSize, patternSize, pattern, nanCallback));
         }
         else if (!error.empty())
         {
-            NanThrowTypeError(error.c_str());
+            Nan::ThrowTypeError(error.c_str());
         }
 
-	NanReturnUndefined();
+	return;
     }
 }

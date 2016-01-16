@@ -1,5 +1,5 @@
 # Pull base image from stock node image.
-FROM node:0.12.9
+FROM node:4.2.4
 
 # Maintainer
 MAINTAINER Gilles Perreymond <gperreymond@gmail.com>

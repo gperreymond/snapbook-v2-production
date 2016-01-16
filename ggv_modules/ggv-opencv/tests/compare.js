@@ -15,18 +15,18 @@ process.argv.forEach(function (val, index, array) {
 
 var processes = 4;
 var q = async.queue(function (task, callback) {
-    //console.log('batch', task.pattern);
+    console.log('batch', task.pattern);
     batch(path.normalize(task.pattern), task.imview, function(err, result) {
         if (err) {
             callback(err, false);
         } else {
-            //console.log('finished processing', result.data);
+            console.log('finished processing', result.data);
             callback(false, result);
         }
     });
 }, processes);
 q.drain = function() {
-    //console.log('all items have been processed');
+    console.log('all items have been processed');
 };
 
 cv.loadImage(params.source, function(err, imview) {

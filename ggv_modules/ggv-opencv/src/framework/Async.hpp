@@ -19,8 +19,8 @@ namespace cloudcv
         void operator()(const T& value)
         {
             mTarget = [this, value]() {
-                NanEscapableScope();
-                return NanEscapeScope(MarshalFromNative(value));                            
+                Nan::EscapableHandleScope scope;
+                return scope.Escape(MarshalFromNative(value));                            
             };
         }
 
@@ -62,5 +62,5 @@ namespace cloudcv
      * @param task     Asynchronous task.
      * @param callback Callback function that will be called when task completed.
      */
-    void Async(AsyncLambdaFunction task, NanCallback * callback);
+    void Async(AsyncLambdaFunction task, Nan::Callback * callback);
 }
