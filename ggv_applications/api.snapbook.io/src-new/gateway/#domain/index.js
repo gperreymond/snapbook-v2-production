@@ -1,8 +1,7 @@
 module.exports = {
   
   // injected
-  logger: null,
-  io: null
+  logger: null
   
   // models
   

@@ -65,10 +65,6 @@ module.exports.domain = function() {
   return domain;
 };
 
-module.exports.microservices = function() {
-  return microservices;
-};
-
 // logger to console (deve mode)
 var logger_console = bunyan.createLogger({
   name: "api-gateway",

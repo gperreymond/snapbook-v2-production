@@ -17,6 +17,7 @@ mongoose.connect(process.env.SNAPBOOK_MONGO_URI);
 
 // declare all services
 var Services = require('./services');
+
 // get instances
 var server = Services.server();
 var domain = Services.domain();

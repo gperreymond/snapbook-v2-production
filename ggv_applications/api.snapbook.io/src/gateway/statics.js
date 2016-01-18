@@ -5,7 +5,7 @@ var path = require('path');
 exports.dashboard = {
   handler: {
     directory: {
-      path: require('path').resolve(__dirname, '../dashboard'),
+      path: require('path').resolve(__dirname, '../../dashboard'),
       listing: true
     }
   }
@@ -23,7 +23,7 @@ exports.snaps = {
 exports.bower_components = {
   handler: {
     directory: {
-      path: 'bower_components',
+      path: require('path').resolve(__dirname, '../../bower_components'),
       listing: false
     }
   }

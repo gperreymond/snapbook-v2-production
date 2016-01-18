@@ -21,6 +21,7 @@ exports.create = {
     strategy: 'jwt',
     scope: ['superu']
   },
+  jsonp: 'callback',
   handler: function(request, reply) {
     async.waterfall([
   		/////////////////////////////////////////
@@ -87,14 +88,15 @@ exports.read = {
     strategy: 'jwt',
     scope: ['application', 'user', 'superu']
   },
-  tags: ['api', 'applications'],
-  description: 'Retourne les détails d\'une application',
-  notes: 'Retourne les détails d\'une application',
+  tags: ['api'],
+  description: 'Obtenir les détails d\'une application',
+  notes: 'Obtenir les détails d\'une application',
   validate: {
     params: {
       id: Joi.string().required()
     }
   },
+  jsonp: 'callback',
   handler: function(request, reply) {
     Application
   	.findOne({_id: request.params.id})
@@ -112,6 +114,7 @@ exports.list = {
     strategy: 'jwt',
     scope: ['superu']
   },
+  jsonp: 'callback',
   handler: function(request, reply) {
     Application
   	.find()
@@ -129,9 +132,9 @@ exports.compare = {
     strategy: 'jwt',
     scope: ['application', 'superu']
   },
-  tags: ['api', 'applications'],
-  description: 'Retourne le résultat d\'un compare pour une application',
-  notes: 'Retourne le résultat d\'un compare pour une application',
+  tags: ['api'],
+  description: 'Obtenir le résultat d\'un compare pour une application',
+  notes: 'Obtenir le résultat d\'un compare pour une application',
   validate: {
     payload: {
       file: Joi.object().meta({ swaggerType: 'file' }).required(),
@@ -147,6 +150,7 @@ exports.compare = {
     parse: true,
     allow: 'multipart/form-data'
   },
+  jsonp: 'callback',
   handler: function(request, reply) {
     try {
       async.waterfall([
@@ -339,6 +343,15 @@ exports.batch = {
     strategy: 'jwt',
     scope: ['superu']
   },
+  tags: ['api'],
+  description: 'Lancer le batch de create/update des patterns pour une application',
+  notes: 'Lancer le batch de create/update des patterns pour une application',
+  validate: {
+    params: {
+      id: Joi.string().required()
+    }
+  },
+  jsonp: 'callback',
   handler: function(request, reply) {
     // list all directory patterns
     var volumes_applications = process.env.SNAPBOOK_DIR_APPLICATIONS;
@@ -506,4 +519,83 @@ var batch_one = function(params, reply) {
     return reply(Boom.badRequest('filepath is not good.'));
   }
   
+};
+
+/**********************
+ * RETHINKDB
+ ***/
+
+exports.thinky_list = {
+  auth: {
+    strategy: 'jwt',
+    scope: ['application', 'superu']
+  },
+  tags: ['api'],
+  description: 'Obtenir toutes les application',
+  notes: 'Obtenir toutes les application',
+  validate: {
+  },
+  jsonp: 'callback',
+  handler: function(request, reply) {
+    request.server.domain.FindApplicationsQuery({}, function(err, applications) {
+      if (err) {
+        request.server.logger.error(err);
+        return reply(Boom.badRequest(err));
+      }
+      reply(applications);
+    });
+  }
+};
+
+exports.thinky_read = {
+  auth: {
+    strategy: 'jwt',
+    scope: ['application', 'superu']
+  },
+  tags: ['api'],
+  description: 'Obtenir les détails d\'une application',
+  notes: 'Obtenir les détails d\'une application',
+  validate: {
+    params: {
+      id: Joi.string().required()
+    }
+  },
+  jsonp: 'callback',
+  handler: function(request, reply) {
+    request.server.domain.GetApplicationPopulateQuery(request.params.id, function(err, application) {
+      if (err) {
+        request.server.logger.error(err);
+        return reply(Boom.badRequest(err));
+      }
+      reply(application);
+    });
+  }
+};
+
+exports.thinky_create = {
+  auth: {
+    strategy: 'jwt',
+    scope: ['superu']
+  },
+  tags: ['api'],
+  description: 'Ajouter une application sur snapbook',
+  notes: 'Ajouter une application sur snapbook',
+  payload: {
+    allow: 'application/x-www-form-urlencoded',
+  },
+  validate: {
+    payload: {
+      name: Joi.string().required()
+    }
+  },
+  jsonp: 'callback',
+  handler: function(request, reply) {
+    request.server.domain.CreateApplicationCommand(request.payload, function(err, application) {
+      if (err) {
+        request.server.logger.error(err);
+        return reply(Boom.badRequest(err));
+      }
+      reply(application);
+    });
+  }
 };
